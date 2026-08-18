@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Mall — แปลงรายงานการขาย</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='15' fill='%232563eb'/><path d='M13 23h38l-3.4 27.5A5 5 0 0 1 42.6 55H21.4a5 5 0 0 1-5-4.5z' fill='%23fff'/><path d='M24 24v-4.5a8 8 0 0 1 16 0V24' fill='none' stroke='%23fff' stroke-width='4.5' stroke-linecap='round'/><circle cx='19.5' cy='39' r='2.6' fill='%23fecaca'/><circle cx='44.5' cy='39' r='2.6' fill='%23fecaca'/><circle cx='26' cy='35' r='2.9' fill='%232563eb'/><circle cx='38' cy='35' r='2.9' fill='%232563eb'/><path d='M25.5 42.5a7.5 7.5 0 0 0 13 0' fill='none' stroke='%232563eb' stroke-width='3.2' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f172a; --bg2:#1e293b; --card:#ffffff; --ink:#0f172a; --mut:#64748b;
+    --line:#e2e8f0; --brand:#2563eb; --brand-d:#1d4ed8; --ok:#059669; --ok-bg:#ecfdf5;
+    --warn:#d97706; --warn-bg:#fffbeb; --err:#dc2626; --err-bg:#fef2f2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun',sans-serif;background:#f1f5f9;color:var(--ink);font-size:15px;line-height:1.6}
+  .top{background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);color:#fff;padding:22px 20px}
+  .top .wrap{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-size:21px;font-weight:700;letter-spacing:.2px}
+  .top .sub{font-size:13px;color:#94a3b8}
+  .top .spacer{flex:1}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+  main{padding:24px 20px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+  .card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+  .card h2 .n{background:var(--brand);color:#fff;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex:none}
+  .card .hint{font-size:13px;color:var(--mut);margin-bottom:14px}
+  .drop{border:2px dashed #cbd5e1;border-radius:12px;padding:34px 20px;text-align:center;cursor:pointer;transition:.15s;background:#f8fafc}
+  .drop:hover,.drop.over{border-color:var(--brand);background:#eff6ff}
+  .drop .big{font-size:34px;margin-bottom:6px}
+  .drop .t{font-weight:600}
+  .drop .s{font-size:13px;color:var(--mut)}
+  .file{display:block;line-height:1.8;background:var(--ok-bg);border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:11px 14px;font-size:14px;margin-top:12px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld label{font-size:12px;font-weight:600;color:var(--mut)}
+  input,select{font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:2px solid #bfdbfe;border-color:var(--brand)}
+  .btn{font-family:inherit;font-size:14px;font-weight:600;padding:10px 20px;border:none;border-radius:9px;background:var(--brand);color:#fff;cursor:pointer;transition:.15s}
+  .btn:hover:not(:disabled){background:var(--brand-d)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.gh{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .btn.gh:hover:not(:disabled){background:#f8fafc}
+  .btn.big{font-size:16px;padding:13px 28px;background:var(--ok)}
+  .btn.big:hover:not(:disabled){background:#047857}
+  .btn.save{background:#7c3aed}
+  .btn.save:hover:not(:disabled){background:#6d28d9}
+  .btn.sm{padding:5px 12px;font-size:12.5px}
+  .btn.del{background:#fff;color:var(--err);border:1px solid #fecaca}
+  .btn.del:hover:not(:disabled){background:var(--err-bg)}
+  .empty{text-align:center;color:var(--mut);font-size:13.5px;padding:24px;background:#f8fafc;border-radius:10px}
+  .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;font-size:13px;color:var(--mut)}
+  .msg{border-radius:10px;padding:12px 15px;font-size:14px;margin-bottom:10px;border:1px solid}
+  .msg.ok{background:var(--ok-bg);border-color:#a7f3d0;color:#065f46}
+  .msg.warn{background:var(--warn-bg);border-color:#fde68a;color:#92400e}
+  .msg.err{background:var(--err-bg);border-color:#fecaca;color:#991b1b}
+  .msg b{font-weight:700}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .stat .k{font-size:12px;color:var(--mut);font-weight:600}
+  .stat .v{font-size:21px;font-weight:700;margin-top:2px}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px;max-height:70vh}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;white-space:nowrap}
+  th{background:#f8fafc;font-weight:700;text-align:left;padding:9px 11px;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:2}
+  td{padding:7px 11px;border-bottom:1px solid #f1f5f9}
+  tr:hover td{background:#f8fafc}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .ctr{text-align:center}
+  tr.sub td{background:#eff6ff !important;font-weight:700;border-top:1px solid #bfdbfe}
+  tr.tot td{background:#0f172a !important;color:#fff;font-weight:700;font-size:14px}
+  tr.gap td{background:#f1f5f9 !important;height:14px;padding:0;border:none}
+  tr.note td{background:#fffbeb !important;color:#92400e;font-weight:700;border-top:1px solid #fde68a}
+  tr.unm td{background:#fffef7 !important}
+  .hide{display:none}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid #cbd5e1;border-top-color:var(--brand);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .cfg{background:#0f172a;color:#cbd5e1;font-size:12.5px;padding:9px 20px}
+  .cfg .wrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0}
+  .cfg input{background:#1e293b;border-color:#334155;color:#e2e8f0;font-size:12.5px;padding:6px 10px;flex:1;min-width:230px;letter-spacing:1px}
+  .cfg .btn{padding:6px 14px;font-size:12.5px}
+  .cfg .btn.gh{background:#1e293b;color:#cbd5e1;border-color:#334155}
+  .cfg .btn.gh:hover:not(:disabled){background:#334155}
+  .cfg code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#94a3b8;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:4px 9px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#64748b;flex:none}
+  .dot.on{background:#22c55e}
+  .dot.bad{background:#ef4444}
+  .foot{text-align:center;font-size:12.5px;color:var(--mut);padding:10px 20px 30px}
+  @media(max-width:640px){.top h1{font-size:18px}table{font-size:12.5px}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <div>
+      <h1>🏬 The Mall — แปลงรายงานการขาย</h1>
+      <div class="sub">อัปไฟล์ดิบจากระบบห้าง → ได้ไฟล์รายงานตามฟอร์มบริษัท</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="sub" id="dbInfo">—</div>
+  </div>
+</div>
+
+<div class="cfg">
+  <div class="wrap">
+    <span class="dot" id="dbDot"></span>
+    <span>การเชื่อมต่อ :</span>
+    <code id="urlMask">— ยังไม่ได้ตั้งค่า —</code>
+    <span style="flex:1"></span>
+    <button class="btn gh sm" id="cfgBtn" onclick="toggleCfg()">⚙️ ตั้งค่า</button>
+    <button class="btn gh sm" onclick="loadDb(true)">โหลดฐานข้อมูลใหม่</button>
+  </div>
+  <div class="wrap hide" id="cfgBox" style="margin-top:9px">
+    <span>GAS URL :</span>
+    <input id="gasUrl" type="password" autocomplete="off" spellcheck="false" placeholder="วาง URL ที่ลงท้ายด้วย /exec">
+    <button class="btn gh sm" id="peekBtn" onclick="peek()">👁 แสดง</button>
+    <button class="btn sm" onclick="saveUrl()">บันทึก</button>
+  </div>
+</div>
+
+<main>
+<div class="wrap">
+
+  <div class="card">
+    <h2><span class="n">1</span> เลือกไฟล์ดิบ</h2>
+    <div class="hint">ไฟล์ Sales Report จากระบบห้าง (.xlsx / .xls / .csv) — ไฟล์ถูกอ่านในเครื่องคุณ ไม่ได้อัปโหลดไปที่ไหน</div>
+    <div class="drop" id="drop">
+      <div class="big">📄</div>
+      <div class="t">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางตรงนี้</div>
+      <div class="s">เช่น Sales Report 1 - 31 JUL 2026 - APL11.xlsx</div>
+    </div>
+    <input type="file" id="fileIn" class="hide" accept=".xlsx,.xls,.csv">
+    <div id="fileBox"></div>
+  </div>
+
+  <div class="card hide" id="optCard">
+    <h2><span class="n">2</span> ตรวจงวดรายงาน</h2>
+    <div class="hint">ระบบอ่านเดือน/ปีจากไฟล์ให้อัตโนมัติ ถ้าไม่ถูกแก้ได้ที่นี่ — วันที่ในรายงานจะเป็นวันสุดท้ายของเดือน</div>
+    <div class="row">
+      <div class="fld"><label>เดือน</label><select id="mm"></select></div>
+      <div class="fld"><label>ปี (ค.ศ.)</label><input type="number" id="yy" style="width:110px" min="2000" max="2100"></div>
+      <div class="fld"><label>วันที่ในรายงาน</label><input id="dShow" readonly style="width:150px;background:#f8fafc"></div>
+      <button class="btn" id="runBtn" onclick="run()">ประมวลผล</button>
+    </div>
+  </div>
+
+  <div id="msgs"></div>
+
+  <div class="card hide" id="resCard">
+    <h2><span class="n">3</span> ผลลัพธ์</h2>
+    <div class="stats" id="stats"></div>
+    <div class="row" style="margin-bottom:16px">
+      <button class="btn big" onclick="download()">⬇ ดาวน์โหลดไฟล์รายงาน (.xlsx)</button>
+      <button class="btn save" id="saveBtn" onclick="saveToArchive()">💾 บันทึกเข้าคลัง</button>
+      <button class="btn gh" onclick="toggleAll()" id="tgBtn">แสดงทุกแถว</button>
+    </div>
+    <div class="tbl-wrap"><table id="prev"></table></div>
+  </div>
+
+  <div class="card" id="histCard">
+    <h2><span class="n">4</span> คลังรายงานย้อนหลัง</h2>
+    <div class="hint" id="histHint">1 เดือน = 1 แท็บในไฟล์คลัง · โหลดซ้ำได้ทุกเมื่อ · ลบแท็บในชีท = ข้อมูลเดือนนั้นหายจากรายการนี้</div>
+    <div id="histBody"><div class="empty">— ยังไม่ได้เชื่อมต่อ GAS —</div></div>
+  </div>
+
+</div>
+</main>
+
+<div class="foot">โปรเจค 18 — The Mall Sales Report · ฐานข้อมูล BRANCH / ALL CODE อยู่บน Google Sheet</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+/* =========================================================================
+   โปรเจค 18 : The Mall Sales Report
+   กติกาแปลงข้อมูล (ยืนยันกับผู้ใช้แล้ว 18/08/2026)
+     A Date      = วันสุดท้ายของเดือน
+     B Branch    = BRANCH!B   (ถ้าไม่พบรหัส ใส่รหัสดิบไปก่อน + เตือน)
+     C Sub-Dept  = รหัสสาขาจากไฟล์ดิบ แถว 2      (เก็บเป็นข้อความ)
+     D UPC       = ALL CODE!C barcode            (เก็บเป็นข้อความ)
+     E Desc      = ไฟล์ดิบ Material - Text
+     F Reference = ไฟล์ดิบ Material - Key        (เก็บเป็นข้อความ)
+     G Qty       = ไฟล์ดิบ Sum of Sales Qty ของสาขานั้น (เอาเฉพาะ > 0)
+     H Net Sales = G x ALL CODE!I (full price)
+     I GP%       = ALL CODE!H x 100
+     J GP Amount = H - K
+     K Net Pay   = G x ALL CODE!J (price after GP & VAT)
+     L,M         = ผลรวม H,K ของบล็อก (สาขา x GP%) ใส่ที่แถวสุดท้ายของบล็อก
+   ========================================================================= */
+
+var THMON = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+var ENMON = {JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+
+var DB = null;      // {branchMap, codeMap, updated}
+var RAW = null;     // ผลอ่านไฟล์ดิบ
+var OUT = null;     // ผลประมวลผล
+var showAll = false;
+
+/* ---------- utils ---------- */
+function $(id){ return document.getElementById(id); }
+function money(n){ return (n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function intf(n){ return (n||0).toLocaleString('th-TH'); }
+function r2(n){ return Math.round((n+Number.EPSILON)*100)/100; }
+function lastDay(y,m){ return new Date(y,m,0).getDate(); }
+function pad(n){ return (n<10?'0':'')+n; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+function msg(cls,html){ $('msgs').insertAdjacentHTML('beforeend','<div class="msg '+cls+'">'+html+'</div>'); }
+function clearMsg(){ $('msgs').innerHTML=''; }
+
+/* ---------- config (ซ่อน URL ไว้ ไม่โชว์บนหน้าจอ) ---------- */
+function maskUrl(u){
+  if(!u) return '— ยังไม่ได้ตั้งค่า —';
+  var m = u.match(/\/macros\/s\/([^\/]+)/);
+  if(!m) return u.slice(0,18) + '••••••••';
+  return 'script.google.com/macros/s/••••••••••' + m[1].slice(-4) + '/exec';
+}
+function updateMask(){
+  $('urlMask').textContent = maskUrl(localStorage.getItem('mall18_gas') || '');
+}
+function toggleCfg(){
+  var box = $('cfgBox'), open = box.classList.contains('hide');
+  box.classList.toggle('hide', !open);
+  $('cfgBtn').textContent = open ? '✕ ปิด' : '⚙️ ตั้งค่า';
+  if(open){
+    $('gasUrl').value = localStorage.getItem('mall18_gas') || '';
+    $('gasUrl').type = 'password';
+    $('peekBtn').textContent = '👁 แสดง';
+    $('gasUrl').focus();
+  }
+}
+function peek(){
+  var el = $('gasUrl'), hidden = el.type === 'password';
+  el.type = hidden ? 'text' : 'password';
+  $('peekBtn').textContent = hidden ? '🙈 ซ่อน' : '👁 แสดง';
+}
+function saveUrl(){
+  localStorage.setItem('mall18_gas', $('gasUrl').value.trim());
+  localStorage.removeItem('mall18_db');
+  updateMask();
+  $('gasUrl').value = '';
+  if(!$('cfgBox').classList.contains('hide')) toggleCfg();
+  loadDb(true);
+}
+
+/* ---------- โหลดฐานข้อมูลจาก GAS (JSONP + retry 3 ครั้ง) ---------- */
+function jsonp(url, timeout){
+  return new Promise(function(res,rej){
+    var cb = 'cb18_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    var s = document.createElement('script');
+    var done = false;
+    var t = setTimeout(function(){ if(done) return; done=true; cleanup(); rej(new Error('หมดเวลารอ')); }, timeout||25000);
+    function cleanup(){
+      clearTimeout(t);
+      try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
+      if(s.parentNode) s.parentNode.removeChild(s);
+    }
+    window[cb] = function(d){ if(done) return; done=true; cleanup(); res(d); };
+    s.onerror = function(){ if(done) return; done=true; cleanup(); rej(new Error('เชื่อมต่อไม่ได้')); };
+    s.src = url + (url.indexOf('?')>-1?'&':'?') + 'callback=' + cb;
+    document.body.appendChild(s);
+  });
+}
+
+async function loadDb(fresh){
+  var url = localStorage.getItem('mall18_gas') || '';
+  updateMask();
+  if(!url){
+    setDot('bad','ยังไม่ได้ตั้งค่า GAS URL');
+    if($('cfgBox').classList.contains('hide')) toggleCfg();   // ยังไม่เคยตั้งค่า -> เปิดช่องให้เลย
+    return;
+  }
+
+  if(!fresh){
+    var c = localStorage.getItem('mall18_db');
+    if(c){
+      try{
+        var o = JSON.parse(c);
+        if(Date.now()-o.t < 6*3600*1000){
+          applyDb(o.d);
+          setDot('on','ฐานข้อมูล (แคช) · '+DB.nBranch+' สาขา · '+DB.nCode+' รหัส');
+          loadHistory();
+          return;
+        }
+      }catch(e){}
+    }
+  }
+
+  setDot('','<span class="spin"></span> กำลังโหลดฐานข้อมูล…');
+  var lastErr = null;
+  for(var i=1;i<=3;i++){
+    try{
+      var r = await jsonp(url + '?fresh=' + (fresh?'1':'0'), 25000);
+      if(!r || !r.ok) throw new Error((r && r.error) || 'ข้อมูลไม่ถูกต้อง');
+      applyDb(r.data);
+      localStorage.setItem('mall18_db', JSON.stringify({t:Date.now(), d:r.data}));
+      setDot('on','ฐานข้อมูลพร้อม · '+DB.nBranch+' สาขา · '+DB.nCode+' รหัส · อัปเดต '+esc(r.data.updated));
+      loadHistory();
+      return;
+    }catch(e){
+      lastErr = e;
+      await new Promise(function(z){ setTimeout(z, 900*i); });
+    }
+  }
+  setDot('bad','โหลดฐานข้อมูลไม่สำเร็จ : '+esc(lastErr ? lastErr.message : ''));
+}
+
+function applyDb(d){
+  var bm = {}, cm = {};
+  d.branch.forEach(function(b){ bm[String(b[0]).trim().toUpperCase()] = b[1]; });
+  d.codes.forEach(function(c){
+    cm[String(c[0]).trim()] = { upc:String(c[1]).trim(), gp:+c[2], full:+c[3], net:+c[4] };
+  });
+  DB = { branchMap:bm, codeMap:cm, updated:d.updated, nBranch:d.branch.length, nCode:d.codes.length };
+}
+
+function setDot(cls,txt){
+  $('dbDot').className = 'dot ' + (cls||'');
+  $('dbInfo').innerHTML = txt;
+}
+
+/* ---------- อ่านไฟล์ดิบ ---------- */
+function handleFile(f){
+  clearMsg();
+  $('resCard').classList.add('hide');
+  var rd = new FileReader();
+  rd.onload = function(ev){
+    try{
+      var wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      RAW = parseRaw(wb);
+      $('fileBox').innerHTML = '<div class="file">✅ <b>'+esc(f.name)+'</b> · ชีท "'+esc(RAW.sheet)+'" · '
+        + RAW.plants.length+' สาขา · '+RAW.items.length+' รายการสินค้า'
+        + (RAW.vendor ? '<br>&nbsp;&nbsp;&nbsp;Vendor : <b>'+esc(RAW.vendor)+'</b>' : '')+'</div>';
+      $('optCard').classList.remove('hide');
+      if(RAW.month) $('mm').value = RAW.month;
+      if(RAW.year)  $('yy').value = RAW.year;
+      syncDate();
+      if(!RAW.month || !RAW.year) msg('warn','⚠ อ่านเดือน/ปีจากไฟล์ไม่ได้ กรุณาเลือกเองในขั้นตอนที่ 2');
+    }catch(e){
+      $('fileBox').innerHTML = '';
+      $('optCard').classList.add('hide');
+      msg('err','❌ อ่านไฟล์ไม่สำเร็จ : '+esc(e.message));
+    }
+  };
+  rd.onerror = function(){ msg('err','❌ เปิดไฟล์ไม่ได้'); };
+  rd.readAsArrayBuffer(f);
+}
+
+function parseRaw(wb){
+  var name = wb.SheetNames[0];
+  var g = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, raw:true, defval:null, blankrows:true});
+
+  // หาแถวหัวข้อ "Sum of Sales Qty"
+  var qr = -1;
+  for(var r=0; r<Math.min(g.length,20) && qr<0; r++){
+    var row = g[r] || [];
+    for(var c=0;c<row.length;c++){
+      if(typeof row[c]==='string' && row[c].trim()==='Sum of Sales Qty'){ qr=r; break; }
+    }
+  }
+  if(qr < 1) throw new Error('ไม่พบแถวหัวข้อ "Sum of Sales Qty" — รูปแบบไฟล์ดิบอาจเปลี่ยนไป');
+
+  var hdr  = g[qr]   || [];
+  var prow = g[qr-1] || [];      // แถวรหัสสาขา
+
+  // คอลัมน์ซ้าย
+  var cKey = -1, cDesc = -1, cVenK = -1, cVenT = -1;
+  for(var c=0;c<hdr.length;c++){
+    var v = (typeof hdr[c]==='string') ? hdr[c].trim() : '';
+    if(v === 'Material - Key')  cKey = c;
+    if(v === 'Material - Text') cDesc = c;
+    if(/External Vendor/i.test(v) && /\(Key\)/i.test(v))  cVenK = c;
+    if(/External Vendor/i.test(v) && /\(Text\)/i.test(v)) cVenT = c;
+  }
+  if(cKey  < 0) throw new Error('ไม่พบคอลัมน์ "Material - Key" (รหัสสินค้า)');
+  if(cDesc < 0) throw new Error('ไม่พบคอลัมน์ "Material - Text" (ชื่อสินค้า)');
+
+  // คอลัมน์สาขา (อ่านแบบไดนามิก รองรับสาขาเพิ่ม/ย้ายตำแหน่ง)
+  var plants = [];
+  for(var c=0;c<hdr.length;c++){
+    if(!(typeof hdr[c]==='string' && hdr[c].trim()==='Sum of Sales Qty')) continue;
+    var p = prow[c];
+    if(p===null || p===undefined || String(p).trim()==='') continue;
+    p = String(p).trim().toUpperCase();
+    if(p.indexOf('TOTAL') === 0) continue;           // ข้ามคอลัมน์ Total
+    var gcol = (typeof hdr[c+1]==='string' && hdr[c+1].trim()==='Sum of Gross Sales') ? c+1 : -1;
+    plants.push({code:p, qty:c, gross:gcol});
+  }
+  if(!plants.length) throw new Error('ไม่พบคอลัมน์สาขาในไฟล์ดิบ');
+
+  // ข้อมูลสินค้า
+  var items = [];
+  for(var r=qr+1; r<g.length; r++){
+    var row = g[r] || [];
+    var k = row[cKey];
+    if(k===null || k===undefined || String(k).trim()==='') continue;
+    items.push({ key:String(k).trim(), desc:row[cDesc], row:r, cells:row });
+  }
+  if(!items.length) throw new Error('ไม่พบข้อมูลสินค้าในไฟล์ดิบ');
+
+  // Vendor : ดึงจากไฟล์ดิบอัตโนมัติ เช่น "APL11  บริษัท อโพสโทรฟี แอล จำกัด"
+  var vendor = '';
+  for(var r=qr+1; r<g.length && !vendor; r++){
+    var row = g[r] || [];
+    var vk = (cVenK>-1 ? row[cVenK] : row[0]);
+    var vt = (cVenT>-1 ? row[cVenT] : row[1]);
+    vk = (vk==null?'':String(vk).trim());
+    vt = (vt==null?'':String(vt).trim());
+    if(vk || vt) vendor = (vk && vt) ? (vk + '  ' + vt) : (vk || vt);
+  }
+
+  // เดือน/ปี จากชื่อชีท เช่น "Sales 1 - 31 JUL 2026"
+  var mo = null, yr = null;
+  name.toUpperCase().replace(/[^A-Z0-9]+/g,' ').split(' ').forEach(function(t){
+    if(ENMON[t]) mo = ENMON[t];
+    if(/^\d{4}$/.test(t)){ var n = +t; if(n>=2000 && n<=2100) yr = n; }
+  });
+
+  return {sheet:name, plants:plants, items:items, month:mo, year:yr, vendor:vendor};
+}
+
+/* ---------- บล็อก subtotal : สาขา x GP% ---------- */
+function makeBlocks(rows){
+  var blocks = [], i = 0;
+  while(i < rows.length){
+    var j = i;
+    while(j+1 < rows.length && rows[j+1].code===rows[i].code && rows[j+1].gp===rows[i].gp) j++;
+    var sH=0, sK=0, sQ=0;
+    for(var k=i;k<=j;k++){ sH += rows[k].H; sK += rows[k].K; sQ += rows[k].qty; }
+    blocks.push({from:i, to:j, code:rows[i].code, branch:rows[i].branch,
+                 gp:rows[i].gp, H:r2(sH), K:r2(sK), qty:sQ});
+    i = j+1;
+  }
+  return blocks;
+}
+
+/* ---------- ประมวลผล ---------- */
+function run(){
+  clearMsg();
+  if(!DB){  msg('err','❌ ยังไม่มีฐานข้อมูล — ตรวจ GAS URL ด้านบนแล้วกด "โหลดฐานข้อมูลใหม่"'); return; }
+  if(!RAW){ msg('err','❌ ยังไม่ได้เลือกไฟล์ดิบ'); return; }
+
+  var m = +$('mm').value, y = +$('yy').value;
+  if(!m || !y){ msg('err','❌ กรุณาระบุเดือน/ปี'); return; }
+  var d = lastDay(y,m);
+
+  var rows = [], unmatched = [], warnNoCode = {}, warnNoBranch = {}, rawGross = 0, seq = 0;
+
+  RAW.items.forEach(function(it){
+    var rec = DB.codeMap[it.key];
+    RAW.plants.forEach(function(p){
+      var gross = (p.gross > -1) ? it.cells[p.gross] : null;
+      if(typeof gross === 'number') rawGross += gross;
+      var q = it.cells[p.qty];
+      if(typeof q !== 'number' || q <= 0) return;      // เอาเฉพาะที่ขายได้
+      var known = Object.prototype.hasOwnProperty.call(DB.branchMap, p.code);
+      if(!rec){
+        // ไม่พบรหัสใน ALL CODE -> ไม่ทิ้ง แต่ยกไปไว้ท้ายรายงานพร้อมข้อมูลเท่าที่มีจากไฟล์ดิบ
+        warnNoCode[it.key] = (warnNoCode[it.key]||0) + q;
+        unmatched.push({
+          code:p.code, branch: known ? DB.branchMap[p.code] : p.code,
+          desc:it.desc, ref:it.key, qty:q,
+          H: (typeof gross === 'number') ? r2(gross) : null,
+          ord: it.row*1000 + (seq++)
+        });
+        return;
+      }
+      if(!known) warnNoBranch[p.code] = (warnNoBranch[p.code]||0) + q;
+      var H = r2(q*rec.full), K = r2(q*rec.net);
+      rows.push({
+        code:p.code, branch: known ? DB.branchMap[p.code] : p.code,
+        upc:rec.upc, desc:it.desc, ref:it.key, qty:q,
+        H:H, gp:Math.round(rec.gp*100), J:r2(H-K), K:K,
+        ord: it.row*1000 + (seq++)
+      });
+    });
+  });
+
+  if(!rows.length){ msg('err','❌ ไม่มีรายการที่ขายได้เลยในไฟล์นี้'); return; }
+
+  // เรียง : รหัสสาขาน้อย→มาก, GP%, ลำดับในไฟล์ดิบ
+  rows.sort(function(a,b){
+    if(a.code !== b.code) return a.code < b.code ? -1 : 1;
+    if(a.gp !== b.gp) return a.gp - b.gp;
+    return a.ord - b.ord;
+  });
+
+  var blocks = makeBlocks(rows);
+
+  var tQ=0, tH=0, tJ=0, tK=0;
+  rows.forEach(function(r){ tQ+=r.qty; tH+=r.H; tJ+=r.J; tK+=r.K; });
+  tH=r2(tH); tJ=r2(tJ); tK=r2(tK);
+
+  // รายการที่ไม่พบรหัส : เรียงตามสาขา แล้วตามลำดับในไฟล์ดิบ
+  unmatched.sort(function(a,b){
+    if(a.code !== b.code) return a.code < b.code ? -1 : 1;
+    return a.ord - b.ord;
+  });
+  var uQ=0, uH=0;
+  unmatched.forEach(function(r){ uQ += r.qty; uH += (r.H||0); });
+  uH = r2(uH);
+
+  OUT = { rows:rows, blocks:blocks, unmatched:unmatched, uQ:uQ, uH:uH,
+          y:y, m:m, d:d, vendor:RAW.vendor || '', rawGross:r2(rawGross),
+          date:new Date(Date.UTC(y, m-1, d)), tQ:tQ, tH:tH, tJ:tJ, tK:tK };
+
+  /* ---- คำเตือน ---- */
+  var nc = Object.keys(warnNoCode);
+  if(nc.length){
+    msg('warn','⚠ <b>มีรหัสสินค้าที่ขายได้แต่ไม่มีในชีท ALL CODE จำนวน '+nc.length+' รหัส ('+uQ+' ชิ้น '+money(uH)+' บาท)</b>'
+      + ' — ระบบ <b>ยกไปแสดงไว้ท้ายรายงาน</b> พร้อมข้อมูลเท่าที่มีจากไฟล์ดิบ (ไม่มี UPC / GP% / Net Payment เพราะยังไม่มีในฐานข้อมูล)'
+      + ' และ <b>ไม่รวมในยอด Total ด้านบน</b>'
+      + '<br>ถ้าต้องการให้ขึ้นในรายงานปกติ ต้องไปเพิ่มที่ <b>ชีทต้นทาง</b> ของ ALL CODE (ชีทนี้ดึงมาด้วย IMPORTRANGE แก้ตรงนี้ไม่ได้) แล้วกด "โหลดฐานข้อมูลใหม่"<br>'
+      + nc.map(function(k){ return esc(k)+' ('+warnNoCode[k]+' ชิ้น)'; }).join(' · '));
+  }
+  var nb = Object.keys(warnNoBranch);
+  if(nb.length){
+    msg('warn','⚠ <b>สาขาที่ยังไม่มีในชีท BRANCH : '+nb.map(esc).join(', ')+'</b>'
+      + ' — ระบบใส่รหัสดิบไว้ในช่อง Branch ให้ก่อน กรุณาให้ทีมไปเพิ่มชื่อสาขาที่ <b>ชีทต้นทาง</b> ของ BRANCH แล้วกด "โหลดฐานข้อมูลใหม่"');
+  }
+  var diff = r2(rawGross - tH - uH);
+  if(Math.abs(diff) > 0.01){
+    msg('err','❌ <b>ยอดขายไม่ตรงกัน</b> — ไฟล์ดิบ (Sum of Gross Sales) = <b>'+money(rawGross)
+      + '</b> แต่รวมจากรายงาน (ยอดหลัก '+money(tH)+' + ท้ายรายงาน '+money(uH)+') = <b>'+money(tH+uH)
+      + '</b> ต่างกัน <b>'+money(diff)+'</b> บาท'
+      + '<br>สาเหตุที่พบบ่อย : ราคาใน ALL CODE ไม่ตรงกับราคาที่ห้างขายจริง');
+  } else if(uH > 0){
+    msg('ok','✅ <b>ตรวจยอดผ่าน</b> — ยอดหลัก '+money(tH)+' + ท้ายรายงาน '+money(uH)
+      + ' = <b>'+money(rawGross)+'</b> ตรงกับไฟล์ดิบพอดี');
+  } else {
+    msg('ok','✅ <b>ตรวจยอดผ่าน</b> — ยอดขายจากไฟล์ดิบตรงกับที่คำนวณจาก ALL CODE พอดี ('+money(tH)+' บาท)');
+  }
+
+  render();
+  $('resCard').classList.remove('hide');
+  $('resCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------- แสดงผลบนหน้าจอ ---------- */
+function render(){
+  var o = OUT;
+  $('stats').innerHTML =
+      st('งวด', THMON[o.m-1]+' '+o.y) +
+      st('จำนวนแถว', intf(o.rows.length)) +
+      st('สาขา', intf(o.blocks.length)) +
+      st('จำนวนชิ้น', intf(o.tQ)) +
+      st('Net Sales', money(o.tH)) +
+      st('Net Payment', money(o.tK)) +
+      (o.unmatched.length ? st('ไม่พบรหัส (ท้ายรายงาน)', intf(o.unmatched.length)+' แถว') : '');
+
+  var head = ['Date','Branch','Sub-Dept','UPC','Brand ID - Description','Reference','Qty',
+              'Net Sales','GP%','GP Amount','Net Payment','Sales','Payment'];
+  var h = '<thead><tr>' + head.map(function(x,i){
+      return '<th class="'+(i>=6?'num':'')+'">'+x+'</th>'; }).join('') + '</tr></thead><tbody>';
+
+  var dtxt = pad(o.d)+'/'+pad(o.m)+'/'+o.y;
+  var limit = showAll ? o.rows.length : Math.min(o.rows.length, 40);
+  var bi = 0;
+  for(var i=0;i<limit;i++){
+    var r = o.rows[i];
+    var blk = (o.blocks[bi] && o.blocks[bi].to === i) ? o.blocks[bi] : null;
+    if(blk) bi++;
+    h += '<tr'+(blk?' class="sub"':'')+'>'
+       + td(dtxt,'ctr') + td(r.branch) + td(r.code,'ctr') + td(r.upc,'ctr') + td(r.desc)
+       + td(r.ref,'ctr') + td(intf(r.qty),'num') + td(money(r.H),'num') + td(r.gp,'ctr')
+       + td(money(r.J),'num') + td(money(r.K),'num')
+       + td(blk?money(blk.H):'','num') + td(blk?money(blk.K):'','num') + '</tr>';
+  }
+  if(limit < o.rows.length){
+    h += '<tr><td colspan="13" style="text-align:center;color:#64748b;padding:12px">… อีก '
+       + intf(o.rows.length-limit) + ' แถว (กดปุ่ม "แสดงทุกแถว" เพื่อดูทั้งหมด) …</td></tr>';
+  }
+  h += '<tr class="tot">' + td('') + td('')
+     + '<td colspan="4" class="ctr">Total By *** All Store ***</td>'
+     + td(intf(o.tQ),'num') + td(money(o.tH),'num') + td('')
+     + td(money(o.tJ),'num') + td(money(o.tK),'num')
+     + td(money(o.tH),'num') + td(money(o.tK),'num') + '</tr>';
+
+  if(o.unmatched.length){
+    h += '<tr class="gap"><td colspan="13">&nbsp;</td></tr>'
+       + '<tr class="note"><td colspan="13">รายการที่ไม่พบรหัสในชีท ALL CODE — ข้อมูลจากไฟล์ดิบ (ไม่รวมในยอด Total ด้านบน)</td></tr>';
+    o.unmatched.forEach(function(r){
+      h += '<tr class="unm">' + td(dtxt,'ctr') + td(r.branch) + td(r.code,'ctr') + td('','ctr')
+         + td(r.desc) + td(r.ref,'ctr') + td(intf(r.qty),'num')
+         + td(r.H==null?'':money(r.H),'num') + td('') + td('') + td('') + td('') + td('') + '</tr>';
+    });
+    h += '<tr class="sub">' + td('') + td('')
+       + '<td colspan="4" class="ctr">รวมรายการที่ไม่พบรหัส</td>'
+       + td(intf(o.uQ),'num') + td(money(o.uH),'num') + td('') + td('') + td('') + td('') + td('') + '</tr>'
+       + '<tr class="tot">' + td('') + td('')
+       + '<td colspan="4" class="ctr">รวมทั้งสิ้น (ต้องตรงกับไฟล์ดิบ)</td>'
+       + td(intf(o.tQ + o.uQ),'num') + td(money(o.tH + o.uH),'num')
+       + td('') + td('') + td('') + td('') + td('') + '</tr>';
+  }
+
+  $('prev').innerHTML = h + '</tbody>';
+  $('tgBtn').textContent = showAll ? 'ย่อกลับ 40 แถว' : 'แสดงทุกแถว';
+}
+function st(k,v){ return '<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'; }
+function td(v,c){ return '<td'+(c?' class="'+c+'"':'')+'>'+esc(v)+'</td>'; }
+function toggleAll(){ showAll = !showAll; render(); }
+
+/* ---------- ดาวน์โหลด .xlsx (ฟอร์มเหมือนรายงานต้นฉบับ) ---------- */
+async function download(src){
+  var o = src || OUT;
+  if(!o) return;
+  var tag = pad(o.m) + pad(o.y % 100);
+  var wb = new ExcelJS.Workbook();
+  var ws = wb.addWorksheet(tag);
+
+  [9.14,27.71,7.71,16.14,45.71,14.71,7.71,11.71,5.71,11.71,13.28,11.71,11.71]
+    .forEach(function(w,i){ ws.getColumn(i+1).width = w; });
+
+  var CEN = {horizontal:'center'};
+  var FD = '[$-1010000]d/m/yy;@';
+  var FQ = '#,##0_);[Red](#,##0)';
+  var FM = '#,##0.00_);[Red](#,##0.00)';
+
+  // หัวกระดาษ (Vendor ดึงจากไฟล์ดิบอัตโนมัติ)
+  ws.getCell('E1').value = 'THE MALL GROUP CO.,LTD.';
+  ws.getCell('E2').value = 'รายงานการขายประจำเดือนเงื่อนไขเก็บตามยอดขาย';
+  ws.getCell('E3').value = 'ระหว่างวันที่ 01-'+pad(o.m)+'-'+o.y+' - '+o.d+'-'+pad(o.m)+'-'+o.y;
+  ['E1','E2','E3'].forEach(function(a){
+    ws.getCell(a).font = {name:'DilleniaUPC', size:16, bold:true};
+    ws.getCell(a).alignment = CEN;
+  });
+  ws.getCell('A4').value = 'Vendor :';
+  ws.getCell('A4').font = {name:'DilleniaUPC', size:16, bold:true};
+  ws.getCell('B4').value = o.vendor || '';
+  ws.getCell('B4').font = {name:'DilleniaUPC', size:16, bold:true};
+
+  ['Date','Branch','Sub-Dept','UPC','Brand ID - Description','Reference ','Qty ',
+   'Net Sales','GP%','GP Amount','Net Payment ','Sales','Payment'].forEach(function(t,i){
+    var c = ws.getCell(5, i+1);
+    c.value = t;
+    c.font = {name:'DilleniaUPC', size:16, bold:true};
+    c.alignment = CEN;
+    c.border = {top:{style:'thin'}, bottom:{style:'thin'}};
+  });
+
+  var R0 = 6;
+  o.rows.forEach(function(r,i){
+    var n = R0 + i;
+    set(ws,n,1,  o.date,           FD, CEN);
+    set(ws,n,2,  r.branch);
+    set(ws,n,3,  String(r.code),   '@', CEN);
+    set(ws,n,4,  String(r.upc),    '@');
+    set(ws,n,5,  r.desc==null?'':r.desc);
+    set(ws,n,6,  String(r.ref),    '@', CEN);
+    set(ws,n,7,  r.qty,            FQ, CEN);
+    set(ws,n,8,  r.H,              FM);
+    set(ws,n,9,  r.gp,             '0', CEN);
+    set(ws,n,10, r.J,              FM);
+    set(ws,n,11, r.K,              FM);
+    set(ws,n,12, null,             FM);
+    set(ws,n,13, null,             FM);
+  });
+
+  o.blocks.forEach(function(b){
+    ws.getCell(R0+b.to, 12).value = b.H;
+    ws.getCell(R0+b.to, 13).value = b.K;
+  });
+
+  var TR = R0 + o.rows.length;
+  ws.mergeCells(TR, 3, TR, 6);
+  set(ws,TR,3,  'Total By *** All Store  *** ', null, CEN, true);
+  set(ws,TR,7,  o.tQ, FQ, CEN, true);
+  set(ws,TR,8,  o.tH, FM, null, true);
+  set(ws,TR,10, o.tJ, FM, null, true);
+  set(ws,TR,11, o.tK, FM, null, true);
+  set(ws,TR,12, o.tH, FM, null, true);
+  set(ws,TR,13, o.tK, FM, null, true);
+  ws.getRow(TR).height = 24;
+  for(var c=1;c<=13;c++){
+    var cell = ws.getCell(TR,c);
+    cell.font = {name:'DilleniaUPC', size:16, bold:true};
+    cell.border = {top:{style:'thin'}, bottom:{style:'double'}};
+  }
+
+  /* ---- ท้ายรายงาน : รายการที่ไม่พบรหัสใน ALL CODE (เว้น 5 บรรทัด) ---- */
+  if(o.unmatched.length){
+    var U0 = TR + 6;                       // TR+1..TR+5 เว้นว่าง
+    ws.mergeCells(U0, 1, U0, 8);
+    set(ws, U0, 1, 'รายการที่ไม่พบรหัสในชีท ALL CODE — ข้อมูลจากไฟล์ดิบ (ไม่รวมในยอด Total ด้านบน)',
+        null, {horizontal:'left'}, true);
+
+    o.unmatched.forEach(function(r,i){
+      var n = U0 + 1 + i;
+      set(ws,n,1,  o.date,         FD, CEN);
+      set(ws,n,2,  r.branch);
+      set(ws,n,3,  String(r.code), '@', CEN);
+      set(ws,n,4,  null,           '@');            // UPC : ยังไม่มีในฐานข้อมูล
+      set(ws,n,5,  r.desc==null?'':r.desc);
+      set(ws,n,6,  String(r.ref),  '@', CEN);
+      set(ws,n,7,  r.qty,          FQ, CEN);
+      set(ws,n,8,  r.H,            FM);
+      set(ws,n,9,  null,           '0', CEN);       // GP%        : ยังไม่ทราบ
+      set(ws,n,10, null,           FM);             // GP Amount  : ยังไม่ทราบ
+      set(ws,n,11, null,           FM);             // Net Payment: ยังไม่ทราบ
+    });
+
+    var UR = U0 + 1 + o.unmatched.length;
+    ws.mergeCells(UR, 3, UR, 6);
+    set(ws,UR,3, 'รวมรายการที่ไม่พบรหัส', null, CEN, true);
+    set(ws,UR,7, o.uQ, FQ, CEN, true);
+    set(ws,UR,8, o.uH, FM, null, true);
+    for(var uc=1; uc<=13; uc++){
+      ws.getCell(UR,uc).font = {name:'DilleniaUPC', size:16, bold:true};
+      ws.getCell(UR,uc).border = {top:{style:'thin'}};
+    }
+
+    var GR = UR + 2;
+    ws.mergeCells(GR, 3, GR, 6);
+    set(ws,GR,3, 'รวมทั้งสิ้น (ต้องตรงกับไฟล์ดิบ)', null, CEN, true);
+    set(ws,GR,7, o.tQ + o.uQ, FQ, CEN, true);
+    set(ws,GR,8, r2(o.tH + o.uH), FM, null, true);
+    ws.getRow(GR).height = 24;
+    for(var gc=1; gc<=13; gc++){
+      ws.getCell(GR,gc).font = {name:'DilleniaUPC', size:16, bold:true};
+      ws.getCell(GR,gc).border = {top:{style:'thin'}, bottom:{style:'double'}};
+    }
+  }
+
+  ws.views = [{state:'frozen', ySplit:5}];
+
+  var buf = await wb.xlsx.writeBuffer();
+  var blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'The Mall Sale_'+o.y+' - '+tag+'.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+function set(ws,r,c,v,fmt,align,bold){
+  var cell = ws.getCell(r,c);
+  if(v !== null && v !== undefined) cell.value = v;
+  cell.font = {name:'DilleniaUPC', size:16, bold:!!bold};
+  if(fmt) cell.numFmt = fmt;
+  if(align) cell.alignment = align;
+  return cell;
+}
+
+/* ================= คลังรายงานย้อนหลัง ================= */
+
+var HIST = { months:[], page:0, url:'' };
+var PER_PAGE = 12;
+
+/** POST ไป GAS (text/plain = ไม่ต้อง preflight) + retry 3 ครั้ง */
+async function post(body){
+  var url = localStorage.getItem('mall18_gas') || '';
+  if(!url) throw new Error('ยังไม่ได้ตั้งค่า GAS URL');
+  var lastErr = null;
+  for(var i=1;i<=3;i++){
+    try{
+      var res = await fetch(url, {
+        method:'POST', redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(body)
+      });
+      var j = await res.json();
+      if(!j.ok) throw new Error(j.error || 'ข้อมูลไม่ถูกต้อง');
+      return j.data;
+    }catch(e){
+      lastErr = e;
+      if(i < 3) await new Promise(function(z){ setTimeout(z, 900*i); });
+    }
+  }
+  throw lastErr;
+}
+
+/** แปลงผลลัพธ์เป็นรูปแบบที่เก็บลงชีท : [branch,code,upc,desc,ref,qty,H,gp,J,K,flag] */
+function archiveRows(o){
+  var out = o.rows.map(function(r){
+    return [r.branch, r.code, r.upc, r.desc==null?'':r.desc, r.ref, r.qty, r.H, r.gp, r.J, r.K, ''];
+  });
+  o.unmatched.forEach(function(r){
+    out.push([r.branch, r.code, '', r.desc==null?'':r.desc, r.ref, r.qty,
+              r.H==null?'':r.H, '', '', '', 'X']);
+  });
+  return out;
+}
+
+async function saveToArchive(){
+  if(!OUT){ return; }
+  var tag = pad(OUT.m) + pad(OUT.y % 100);
+  var btn = $('saveBtn');
+  btn.disabled = true;
+  var old = btn.textContent;
+  try{
+    btn.innerHTML = '<span class="spin"></span> กำลังตรวจสอบ…';
+    var ex = await post({action:'exists', tag:tag});
+    if(ex.exists){
+      var yes = confirm('เดือน ' + tag + ' มีอยู่ในคลังแล้ว\n\nต้องการบันทึกทับของเดิมหรือไม่?\n(ข้อมูลเดิมของเดือนนี้จะถูกแทนที่)');
+      if(!yes){ return; }
+    }
+    btn.innerHTML = '<span class="spin"></span> กำลังบันทึก…';
+    var r = await post({action:'save', tag:tag, y:OUT.y, m:OUT.m,
+                        vendor:OUT.vendor || '', rows:archiveRows(OUT)});
+    HIST.url = r.archiveUrl || HIST.url;
+    msg('ok','✅ <b>บันทึกเข้าคลังแล้ว</b> — เดือน '+tag+' จำนวน '+intf(r.saved)+' แถว'
+      + (r.replaced ? ' (ทับของเดิม)' : '')
+      + (HIST.url ? ' · <a href="'+HIST.url+'" target="_blank" rel="noopener">เปิดไฟล์คลัง</a>' : ''));
+    await loadHistory();
+  }catch(e){
+    msg('err','❌ บันทึกเข้าคลังไม่สำเร็จ : '+esc(e.message));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
+async function loadHistory(){
+  var url = localStorage.getItem('mall18_gas') || '';
+  if(!url){ $('histBody').innerHTML = '<div class="empty">— ยังไม่ได้ตั้งค่า GAS URL —</div>'; return; }
+  $('histBody').innerHTML = '<div class="empty"><span class="spin"></span> กำลังโหลดรายการ…</div>';
+  try{
+    var r = await jsonp(url + '?action=list', 25000);
+    if(!r || !r.ok) throw new Error((r && r.error) || 'ข้อมูลไม่ถูกต้อง');
+    HIST.months = r.data.months || [];
+    HIST.url    = r.data.archiveUrl || '';
+    HIST.page   = 0;
+    renderHistory();
+  }catch(e){
+    $('histBody').innerHTML = '<div class="empty">โหลดรายการไม่สำเร็จ : '+esc(e.message)+'</div>';
+  }
+}
+
+function renderHistory(){
+  var ms = HIST.months;
+  if(HIST.url){
+    $('histHint').innerHTML = '1 เดือน = 1 แท็บในไฟล์คลัง · โหลดซ้ำได้ทุกเมื่อ · ลบแท็บในชีท = ข้อมูลเดือนนั้นหายจากรายการนี้'
+      + ' · <a href="'+HIST.url+'" target="_blank" rel="noopener"><b>เปิดไฟล์คลัง</b></a>';
+  }
+  if(!ms.length){
+    $('histBody').innerHTML = '<div class="empty">ยังไม่มีรายงานในคลัง — ประมวลผลแล้วกด "💾 บันทึกเข้าคลัง" ได้เลย</div>';
+    return;
+  }
+  var pages = Math.ceil(ms.length / PER_PAGE);
+  if(HIST.page >= pages) HIST.page = pages-1;
+  var from = HIST.page * PER_PAGE;
+  var list = ms.slice(from, from + PER_PAGE);
+
+  var h = '<div class="tbl-wrap"><table><thead><tr>'
+    + '<th>งวด</th><th>ชีท</th><th>บันทึกเมื่อ</th>'
+    + '<th class="num">แถว</th><th class="num">ชิ้น</th>'
+    + '<th class="num">Net Sales</th><th class="num">Net Payment</th>'
+    + '<th class="ctr">ไม่พบรหัส</th><th></th></tr></thead><tbody>';
+  list.forEach(function(x){
+    h += '<tr>'
+      + td(THMON[x.m-1]+' '+x.y) + td(x.tag,'ctr') + td(x.savedAt,'ctr')
+      + td(intf(x.rows),'num') + td(intf(x.qty),'num')
+      + td(money(x.netSales),'num') + td(money(x.netPayment),'num')
+      + td(x.uRows ? (x.uRows+' แถว / '+money(x.uAmount)) : '-','ctr')
+      + '<td class="ctr" style="white-space:nowrap">'
+      + '<button class="btn sm" onclick="dlHist(\''+x.tag+'\',this)">⬇ โหลด</button> '
+      + '<button class="btn sm del" onclick="delHist(\''+x.tag+'\')">ลบ</button></td></tr>';
+  });
+  h += '</tbody></table></div>';
+
+  h += '<div class="pager"><span>ทั้งหมด '+ms.length+' เดือน · หน้า '+(HIST.page+1)+'/'+pages+'</span>'
+     + '<button class="btn gh sm" onclick="histPage(-1)"'+(HIST.page<=0?' disabled':'')+'>← ก่อนหน้า</button>'
+     + '<button class="btn gh sm" onclick="histPage(1)"'+(HIST.page>=pages-1?' disabled':'')+'>ถัดไป →</button></div>';
+  $('histBody').innerHTML = h;
+}
+function histPage(d){ HIST.page += d; renderHistory(); }
+
+async function dlHist(tag, btn){
+  var url = localStorage.getItem('mall18_gas') || '';
+  var old = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span>'; }
+  try{
+    var r = await jsonp(url + '?action=get&tag=' + encodeURIComponent(tag), 25000);
+    if(!r || !r.ok) throw new Error((r && r.error) || 'ข้อมูลไม่ถูกต้อง');
+    await download(buildFromArchive(r.data.tag, r.data.vendor, r.data.rows));
+  }catch(e){
+    alert('โหลดไม่สำเร็จ : ' + e.message);
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerHTML = old; }
+  }
+}
+
+async function delHist(tag){
+  if(!confirm('ลบข้อมูลเดือน ' + tag + ' ออกจากคลัง?\n\nแท็บ ' + tag + ' ในไฟล์คลังจะถูกลบถาวร')) return;
+  var pin = prompt('ใส่รหัสเพื่อยืนยันการลบเดือน ' + tag);
+  if(pin === null) return;                       // กดยกเลิก
+  try{
+    await post({action:'delete', tag:tag, pin:String(pin).trim()});
+    await loadHistory();
+    msg('ok','✅ ลบเดือน '+esc(tag)+' ออกจากคลังแล้ว');
+  }catch(e){
+    alert('ลบไม่สำเร็จ : ' + e.message);
+  }
+}
+
+/** สร้าง OUT ขึ้นใหม่จากข้อมูลในคลัง เพื่อ generate .xlsx เดิมออกมา */
+function buildFromArchive(tag, vendor, rr){
+  var m = +tag.slice(0,2), y = 2000 + (+tag.slice(2,4));
+  var d = lastDay(y, m);
+  var rows = [], unmatched = [];
+  (rr||[]).forEach(function(a){
+    var o = { branch:a[0], code:a[1], upc:a[2], desc:a[3], ref:a[4],
+              qty:+a[5], H:+a[6], gp:+a[7], J:+a[8], K:+a[9] };
+    if(String(a[10]).toUpperCase() === 'X') unmatched.push(o); else rows.push(o);
+  });
+  var tQ=0, tH=0, tJ=0, tK=0;
+  rows.forEach(function(r){ tQ+=r.qty; tH+=r.H; tJ+=r.J; tK+=r.K; });
+  var uQ=0, uH=0;
+  unmatched.forEach(function(r){ uQ+=r.qty; uH+=r.H; });
+  return { rows:rows, blocks:makeBlocks(rows), unmatched:unmatched, uQ:uQ, uH:r2(uH),
+           y:y, m:m, d:d, vendor:vendor||'', date:new Date(Date.UTC(y, m-1, d)),
+           tQ:tQ, tH:r2(tH), tJ:r2(tJ), tK:r2(tK) };
+}
+
+function syncDate(){
+  var m = +$('mm').value, y = +$('yy').value;
+  $('dShow').value = (m && y) ? pad(lastDay(y,m))+'/'+pad(m)+'/'+y : '';
+}
+
+/* ---------- init ---------- */
+(function init(){
+  var sel = $('mm');
+  THMON.forEach(function(n,i){
+    var op = document.createElement('option');
+    op.value = i+1; op.textContent = n;
+    sel.appendChild(op);
+  });
+  var now = new Date();
+  sel.value = now.getMonth()+1;
+  $('yy').value = now.getFullYear();
+  sel.onchange = syncDate;
+  $('yy').oninput = syncDate;
+  syncDate();
+
+  var dz = $('drop'), fi = $('fileIn');
+  dz.onclick = function(){ fi.click(); };
+  fi.onchange = function(){ if(fi.files[0]) handleFile(fi.files[0]); fi.value=''; };
+  ['dragenter','dragover'].forEach(function(e){
+    dz.addEventListener(e, function(ev){ ev.preventDefault(); dz.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(e){
+    dz.addEventListener(e, function(ev){ ev.preventDefault(); dz.classList.remove('over'); });
+  });
+  dz.addEventListener('drop', function(ev){
+    if(ev.dataTransfer.files[0]) handleFile(ev.dataTransfer.files[0]);
+  });
+
+  loadDb(false);
+})();
+</script>
+</body>
+</html>
