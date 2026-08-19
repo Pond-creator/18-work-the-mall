@@ -109,14 +109,15 @@
     <span>การเชื่อมต่อ :</span>
     <code id="urlMask">— ยังไม่ได้ตั้งค่า —</code>
     <span style="flex:1"></span>
-    <button class="btn gh sm" id="cfgBtn" onclick="toggleCfg()">⚙️ ตั้งค่า</button>
+    <button class="btn gh sm" id="cfgBtn" onclick="toggleCfg()">🔑 ใส่ URL ใหม่</button>
     <button class="btn gh sm" onclick="loadDb(true)">โหลดฐานข้อมูลใหม่</button>
   </div>
   <div class="wrap hide" id="cfgBox" style="margin-top:9px">
-    <span>GAS URL :</span>
-    <input id="gasUrl" type="password" autocomplete="off" spellcheck="false" placeholder="วาง URL ที่ลงท้ายด้วย /exec">
-    <button class="btn gh sm" id="peekBtn" onclick="peek()">👁 แสดง</button>
+    <span>วาง GAS URL ใหม่ :</span>
+    <input id="gasUrl" type="password" autocomplete="off" spellcheck="false"
+           placeholder="URL ที่ลงท้ายด้วย /exec — ของเดิมจะถูกแทนที่">
     <button class="btn sm" onclick="saveUrl()">บันทึก</button>
+    <button class="btn gh sm" onclick="toggleCfg()">ยกเลิก</button>
   </div>
 </div>
 
@@ -220,24 +221,26 @@ function maskUrl(u){
 function updateMask(){
   $('urlMask').textContent = maskUrl(localStorage.getItem('mall18_gas') || '');
 }
+/* เปิด/ปิดช่องใส่ URL — ไม่ดึงค่าเดิมมาแสดงเด็ดขาด ใส่ได้อย่างเดียว อ่านกลับไม่ได้ */
 function toggleCfg(){
   var box = $('cfgBox'), open = box.classList.contains('hide');
   box.classList.toggle('hide', !open);
-  $('cfgBtn').textContent = open ? '✕ ปิด' : '⚙️ ตั้งค่า';
-  if(open){
-    $('gasUrl').value = localStorage.getItem('mall18_gas') || '';
-    $('gasUrl').type = 'password';
-    $('peekBtn').textContent = '👁 แสดง';
-    $('gasUrl').focus();
-  }
+  $('cfgBtn').textContent = open ? '✕ ปิด' : '🔑 ใส่ URL ใหม่';
+  $('gasUrl').value = '';
+  if(open) $('gasUrl').focus();
 }
-function peek(){
-  var el = $('gasUrl'), hidden = el.type === 'password';
-  el.type = hidden ? 'text' : 'password';
-  $('peekBtn').textContent = hidden ? '🙈 ซ่อน' : '👁 แสดง';
-}
+
 function saveUrl(){
-  localStorage.setItem('mall18_gas', $('gasUrl').value.trim());
+  var u = $('gasUrl').value.trim();
+  if(!u){
+    alert('กรุณาวาง GAS URL ก่อนกดบันทึก\n\nถ้าไม่ต้องการเปลี่ยน ให้กดปุ่ม "ยกเลิก"');
+    $('gasUrl').focus();
+    return;                                  // กันเผลอกดบันทึกช่องว่างแล้วลบการเชื่อมต่อทิ้ง
+  }
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec/.test(u)){
+    if(!confirm('URL ที่วางไม่ตรงรูปแบบปกติ\n\nปกติต้องขึ้นต้นด้วย https://script.google.com/macros/s/… และลงท้ายด้วย /exec\n\nต้องการบันทึกต่อไปหรือไม่?')) return;
+  }
+  localStorage.setItem('mall18_gas', u);
   localStorage.removeItem('mall18_db');
   updateMask();
   $('gasUrl').value = '';
