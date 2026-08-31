@@ -57,6 +57,7 @@
   .msg.warn{background:var(--warn-bg);border-color:#fde68a;color:#92400e}
   .msg.err{background:var(--err-bg);border-color:#fecaca;color:#991b1b}
   .msg b{font-weight:700}
+  .msg .dim{opacity:.75;font-size:13px}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:16px}
   .stat{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:13px 15px}
   .stat .k{font-size:12px;color:var(--mut);font-weight:600}
@@ -481,7 +482,25 @@ function run(){
     });
   });
 
-  if(!rows.length){ msg('err','❌ ไม่มีรายการที่ขายได้เลยในไฟล์นี้'); return; }
+  if(!rows.length){
+    if(unmatched.length){
+      var uq0 = 0, uh0 = 0;
+      unmatched.forEach(function(r){ uq0 += r.qty; uh0 += (r.H||0); });
+      var codes0 = Object.keys(warnNoCode);
+      var ex0 = codes0.slice(0,5).map(esc).join(', ') + (codes0.length > 5 ? ' …' : '');
+      msg('err','❌ <b>แมตรหัสไม่ได้เลยทั้งไฟล์</b> — ไฟล์นี้<b>มีของขายจริง</b> '
+        + intf(codes0.length)+' รหัส ('+intf(uq0)+' ชิ้น '+money(r2(uh0))+' บาท) '
+        + 'แต่<b>ไม่พบสักรหัสเดียวในชีท ALL CODE</b> จึงยังออกรายงานให้ไม่ได้ เพราะไม่มีราคา / GP% / Net Payment สักรายการ'
+        + '<br><b>ตรวจ 3 อย่างนี้ :</b>'
+        + '<br>1) ใช้ไฟล์ดิบ<b>ถูกห้าง</b>หรือเปล่า (ไฟล์นี้คือ The Mall ใช่ไหม)'
+        + '<br>2) กด <b>“โหลดฐานข้อมูลใหม่”</b> แล้วดูแถบบนสุดว่าจำนวนรหัสขึ้นครบหรือเป็น 0'
+        + '<br>3) เปิดชีท ALL CODE ดูว่ามีข้อมูลอยู่ไหม — ถ้าขึ้น <b>Loading…</b> หรือ <b>#REF!</b> คือ IMPORTRANGE ค้าง ให้รอสักครู่แล้วโหลดฐานข้อมูลใหม่'
+        + '<br><span class="dim">ตัวอย่างรหัสที่หาไม่เจอ : '+ex0+'</span>');
+    } else {
+      msg('err','❌ <b>ไม่มีรายการที่ขายได้เลยในไฟล์นี้</b> — ทุกแถวมีจำนวนขายเป็น 0 หรือว่าง');
+    }
+    return;
+  }
 
   // เรียง : รหัสสาขาน้อย→มาก, GP%, ลำดับในไฟล์ดิบ
   rows.sort(function(a,b){
